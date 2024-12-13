@@ -52,15 +52,26 @@ app.get('/job-application',async(req,res)=>{
 applicant_email:email}
    const result= await jobAppycollection.find(query).toArray()
 for(const application of result ){
-  console.log(application.job_id)
-  const query1={_id:new ObjectId(application.job_id)}
-  const result= await jobscollection.findOne(query1)
-
+  console.log(application.jobid)
+  const query1={_id:new ObjectId(application.jobid)}
+  const job= await jobscollection.findOne(query1)
+ if(job){
+  application.title=job.title,
+  application.company=job.company
+  application.company_logo=job.company_logo
+ }
 }
-
-
    res.send(result)
 })
+// delete application
+app.delete('/job-application/:id',async(req,res)=>{
+  const id=req.params.id
+  const query={_id:new ObjectId(id)}
+   const result= await jobAppycollection.deleteOne(query)
+   res.send(result)
+})
+
+
   }
    finally {
     // Ensures that the client will close when you finish/error
