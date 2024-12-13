@@ -43,7 +43,26 @@ async function run() {
 app.post('/job-application',async(req,res)=>{
   const application=req.body
    const result= await jobAppycollection.insertOne(application)
-   res.send(result)
+   /// get job applicant
+   const id=application.jobid
+   const query={_id:new ObjectId(id)}
+   const job=await jobscollection.findOne(query)
+   let newcount=0
+   if(job.applicationCount){
+ newcount=job.applicationCount+1
+   }
+   else if (!job.applicationCount){
+    newcount=1
+   }
+   //now update job infu 
+   const filter={_id:new ObjectId(id)}
+   const updateDoc = {
+    $set: {
+      applicationCount:newcount
+    },
+  };
+  const updateresult=await jobscollection.updateOne(filter,updateDoc)
+   res.send(updateresult)
 })
 //my application 
 app.get('/job-application',async(req,res)=>{
@@ -63,6 +82,13 @@ for(const application of result ){
 }
    res.send(result)
 })
+// user user whos appliyed job 
+app.get('/job-application/jobs/:id',async(req,res)=>{
+  const id=req.params.id
+  const query={jobid:id}
+  const result=await jobAppycollection.find(query).toArray()
+  res.send(result)
+})
 // delete application
 app.delete('/job-application/:id',async(req,res)=>{
   const id=req.params.id
@@ -70,8 +96,47 @@ app.delete('/job-application/:id',async(req,res)=>{
    const result= await jobAppycollection.deleteOne(query)
    res.send(result)
 })
+// add job post 
+app.post('/jobs',async(req,res)=>{
+  const newjob=req.body 
+  const result= await jobscollection.insertOne(newjob)
+  res.send(result)
+})
+// get my created job
+app.get('/my_jobs',async(req,res)=>{
+  const email=req.query.email
+console.log(email)
+ 
+  const query={hr_email:email}
 
+  
+  const cursor=jobscollection.find(query)
+  const result=await cursor.toArray()
 
+  res.send(result)
+})
+// 
+//delete my created  jobs
+ app.delete('/jobs/:id',async(req,res)=>{
+  const id=req.params.id
+  const query={_id:new ObjectId(id)}
+  const result= await jobscollection.deleteOne(query)
+  res.send(result)
+ 
+ })
+//update status
+app.patch('/job-application/:id',async(req,res)=>{
+  const id=req.params.id
+  const data=req.body;
+  const filter={_id:new ObjectId(id)}
+  const updateDoc = {
+    $set: {
+      status:data.status
+    },
+  };
+   const result= await jobAppycollection.updateOne(filter,updateDoc)
+   res.send(result)
+})
   }
    finally {
     // Ensures that the client will close when you finish/error
